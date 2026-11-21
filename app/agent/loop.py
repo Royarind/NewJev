@@ -542,9 +542,11 @@ class AgentLoop:
                     return "error"
 
             # --- Low confidence: re-observe and ask again before acting ---
+            # REPORT_ANSWER is a read-only terminal operation: accept it even at low confidence
+            _SKIP_CONF = TERMINAL_OPS | {"REPORT_ANSWER"}
             retries = 0
             while (not is_rescue and decision.effective_confidence < thr and retries < s.low_confidence_retries
-                   and decision.operation not in TERMINAL_OPS):
+                   and decision.operation not in _SKIP_CONF):
                 retries += 1
                 time.sleep(0.8)
                 page = self._augment(self._observe(capture, ctx, step_num) or page, goal, capture,
@@ -557,7 +559,7 @@ class AgentLoop:
                     return "error"
 
             flags: list[str] = ["rescue"] if is_rescue else []
-            if decision.effective_confidence < thr and decision.operation not in TERMINAL_OPS:
+            if decision.effective_confidence < thr and decision.operation not in _SKIP_CONF:
                 flags.append("low_confidence")
                 if (s.confirm_low_confidence and self._reviewer and self._reviewer.interactive
                         and decision.effective_confidence < s.low_confidence_ask_threshold
@@ -755,6 +757,16 @@ class AgentLoop:
                     self._safe_emit("report", {"text": text, "step": len(ctx.history) + 1})
                     result_note = f"Reported answer:\n{text}"
                     exec_result = {"executed": "report_answer", "note": result_note}
+                    # Inject a note so Jev picks DONE on the very next step instead of looping back
+                    ctx.history.append({
+                        "operation": "NOTE",
+                        "note": (
+                            "The answer has been successfully reported to the user. "
+                            "No further browsing, data collection, or navigation is needed. "
+                            "Choose DONE immediately."
+                        ),
+                        "step": len(ctx.history) + 1,
+                    })
                 elif op in SHORTCUT_OPS:
                     try:
                         result_note = self._shortcuts.execute(op, text)
@@ -1028,7 +1040,7 @@ class AgentLoop:
                                                  disabled_shortcuts)
             except Exception as exc:
                 logger.debug("shortcut offer failed: %s", exc)
-        if (hasattr(capture, "vision_shot") and (stuck or element_count(page) < self._settings.vision_min_elements)
+        if (hasattr(capture, "vision_shot") and element_count(page) < self._settings.vision_min_elements
                 and self._vision() is not None):
             extra += [
                 {"id": "VISUAL_CLICK", "kind": "visual", "op": "VISUAL_CLICK",

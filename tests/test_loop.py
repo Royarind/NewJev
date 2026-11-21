@@ -309,3 +309,48 @@ def test_repeated_execution_errors_go_to_rescue_not_straight_to_error():
     assert R.calls == 1 and cap.sent and r["status"] == "done"
     assert sum(1 for h in r["history"] if h.get("failed")) == 3
     assert any("Do not repeat this exact action" in str(h.get("note")) for h in r["history"])
+
+
+def test_report_answer_low_confidence_accepted_without_asking_and_hints_done():
+    class ReportCapture(FakeCapture):
+        def observe(self, screenshot=False):
+            page = super().observe(screenshot=screenshot)
+            page["actions"].append({
+                "id": "report_answer", "kind": "report", "op": "REPORT_ANSWER",
+                "label": "Report the final extracted answer",
+            })
+            return page
+
+    rev = Recorder(confirm=False)
+    # REPORT_ANSWER has low confidence 0.45 (< 0.60 threshold), followed by DONE
+    agent, _ = make([("REPORT_ANSWER", "report", 0.45), ("DONE", None, 0.9)],
+                    noul=[0.95], reviewer=rev, llm="Here is the summary")
+    r = agent.run("Give me latest news", ReportCapture())
+    assert r["status"] == "done"
+    assert "low_confidence" not in rev.asked
+    assert r["final_report"] == "Here is the summary"
+    # Ensure the post-report DONE note was injected into history
+    assert any("successfully reported" in str(h.get("note", "")) for h in r["history"])
+
+
+def test_visual_click_offered_when_few_elements_even_if_not_stuck():
+    from app.agent.loop import AgentLoop
+    from tests.fakes import FakeCapture
+
+    class FewElementsCapture(FakeCapture):
+        def observe(self, screenshot=False):
+            page = super().observe(screenshot=screenshot)
+            # Only 2 elements (fewer than vision_min_elements=6)
+            page["actions"] = page["actions"][:2]
+            return page
+
+        def vision_shot(self):
+            return b"fake-png-bytes"
+
+    agent = AgentLoop(text_llm=FakeLLM("x"), vision_llm=FakeLLM("x"))
+    page = {"actions": [{"id": "a1", "kind": "click", "label": "btn"}], "mode": "desktop"}
+    # Call _augment with stuck=False; VISUAL_CLICK should still be offered
+    augmented = agent._augment(page, "click speaker", FewElementsCapture(), disabled_shortcuts=set(), stuck=False)
+    ids = [a["id"] for a in augmented["actions"]]
+    assert "VISUAL_CLICK" in ids
+
