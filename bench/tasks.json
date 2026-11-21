@@ -1,0 +1,893 @@
+{
+  "_doc": "Benchmark tasks. mode: browser|desktop. checks are evaluated after the run; all must pass. Placeholders: {fixtures} = local fixture server URL, {date_plus_30} = a date 30 days ahead, {email} = NEWJEV_BENCH_EMAIL, {stamp} = run timestamp. Paths starting with ~ are in the user's home folder. Only files/folders named NewJev_Bench_* are ever created or removed.",
+  "tasks": [
+    {
+      "id": "fixture_shop",
+      "tags": [
+        "web",
+        "offline"
+      ],
+      "mode": "browser",
+      "url": "{fixtures}/shop.html",
+      "goal": "Choose size Large, set quantity to 2, write the gift message 'Happy birthday' and add the item to the cart.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "browser",
+          "text": "Cart: 2 × Large — gift message: Happy birthday"
+        }
+      ]
+    },
+    {
+      "id": "httpbin_form",
+      "tags": [
+        "web"
+      ],
+      "mode": "browser",
+      "url": "https://httpbin.org/forms/post",
+      "goal": "Fill the pizza order form: customer name 'Test User', telephone '5551234', email 'test@example.com', size Large, topping Bacon, then submit the order.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "browser",
+          "text": "Test User"
+        },
+        {
+          "type": "text_contains",
+          "mode": "browser",
+          "text": "large"
+        }
+      ]
+    },
+    {
+      "id": "wikipedia_search",
+      "tags": [
+        "web"
+      ],
+      "mode": "browser",
+      "url": "https://en.wikipedia.org",
+      "goal": "Search Wikipedia for Alan Turing and open his article.",
+      "checks": [
+        {
+          "type": "url_contains",
+          "mode": "browser",
+          "text": "Alan_Turing"
+        }
+      ]
+    },
+    {
+      "id": "youtube_first_video",
+      "tags": [
+        "web"
+      ],
+      "mode": "browser",
+      "url": "https://www.youtube.com",
+      "goal": "Search YouTube for 'lofi hip hop' and open the first video in the results.",
+      "checks": [
+        {
+          "type": "url_contains",
+          "mode": "browser",
+          "text": "watch?v="
+        }
+      ]
+    },
+    {
+      "id": "google_flights_search",
+      "tags": [
+        "web"
+      ],
+      "mode": "browser",
+      "url": "https://www.google.com/travel/flights?hl=en",
+      "goal": "Search one-way flights from Delhi to Mumbai on {date_plus_30}. Stop when flight results are listed.",
+      "checks": [
+        {
+          "type": "text_contains_any",
+          "mode": "browser",
+          "texts": [
+            "Top departing flights",
+            "Best departing flights",
+            "Other departing flights"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "github_releases",
+      "tags": [
+        "web"
+      ],
+      "mode": "browser",
+      "url": "https://github.com/microsoft/playwright",
+      "goal": "Open the Releases page of this repository.",
+      "checks": [
+        {
+          "type": "url_contains",
+          "mode": "browser",
+          "text": "/releases"
+        }
+      ]
+    },
+    {
+      "id": "duckduckgo_first_result",
+      "tags": [
+        "web",
+        "new_tab"
+      ],
+      "mode": "browser",
+      "url": "https://duckduckgo.com",
+      "goal": "Search DuckDuckGo for 'Playwright Python docs' and open the first result.",
+      "checks": [
+        {
+          "type": "url_not_contains",
+          "mode": "browser",
+          "text": "duckduckgo.com"
+        }
+      ]
+    },
+    {
+      "id": "gmail_send",
+      "tags": [
+        "web",
+        "login"
+      ],
+      "mode": "browser",
+      "url": "https://mail.google.com",
+      "requires": [
+        "email"
+      ],
+      "goal": "Send an email to {email} with subject 'NewJev bench {stamp}' and body 'Automated benchmark message.'",
+      "checks": [
+        {
+          "type": "text_contains_any",
+          "mode": "browser",
+          "texts": [
+            "Message sent",
+            "Sent"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notepad_type",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "notepad",
+      "goal": "Type 'Hello from NewJev' in Notepad.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "Hello from NewJev"
+        }
+      ]
+    },
+    {
+      "id": "notepad_save",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "notepad",
+      "cleanup": [
+        "~/Desktop/NewJev_Bench_note.txt"
+      ],
+      "goal": "In Notepad, type 'NewJev benchmark file' and save it on the Desktop as NewJev_Bench_note.txt.",
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "~/Desktop/NewJev_Bench_note.txt",
+          "text": "NewJev benchmark file"
+        }
+      ]
+    },
+    {
+      "id": "notepad_append",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "write_file",
+          "path": "~/Desktop/NewJev_Bench_append.txt",
+          "text": "Line one"
+        }
+      ],
+      "cleanup": [
+        "~/Desktop/NewJev_Bench_append.txt"
+      ],
+      "goal": "Open the existing file NewJev_Bench_append.txt from the Desktop in Notepad, add a new line 'Line two' at the end without deleting anything, and save it.",
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "~/Desktop/NewJev_Bench_append.txt",
+          "text": "Line one"
+        },
+        {
+          "type": "file_contains",
+          "path": "~/Desktop/NewJev_Bench_append.txt",
+          "text": "Line two"
+        }
+      ]
+    },
+    {
+      "id": "file_open_via_search",
+      "tags": [
+        "desktop",
+        "files"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "write_file",
+          "path": "~/Documents/NewJev_Bench_find.txt",
+          "text": "needle in a haystack"
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_find.txt"
+      ],
+      "goal": "Use Windows Search on the taskbar to find the file NewJev_Bench_find.txt and open it.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "needle in a haystack"
+        }
+      ]
+    },
+    {
+      "id": "file_open_via_explorer",
+      "tags": [
+        "desktop",
+        "files"
+      ],
+      "mode": "desktop",
+      "url": "explorer downloads",
+      "setup": [
+        {
+          "type": "write_file",
+          "path": "~/Downloads/NewJev_Bench_explore.txt",
+          "text": "found by browsing"
+        }
+      ],
+      "cleanup": [
+        "~/Downloads/NewJev_Bench_explore.txt"
+      ],
+      "goal": "In File Explorer, open the file NewJev_Bench_explore.txt that is in the Downloads folder.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "found by browsing"
+        }
+      ]
+    },
+    {
+      "id": "file_update_existing",
+      "tags": [
+        "desktop",
+        "files"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "write_file",
+          "path": "~/Documents/NewJev_Bench_update.txt",
+          "text": "Status: draft"
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_update.txt"
+      ],
+      "goal": "Open NewJev_Bench_update.txt from Documents, change 'draft' to 'final' and save it.",
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "~/Documents/NewJev_Bench_update.txt",
+          "text": "Status: final"
+        }
+      ]
+    },
+    {
+      "id": "file_delete_confirmed",
+      "tags": [
+        "desktop",
+        "files"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "write_file",
+          "path": "~/Desktop/NewJev_Bench_delete.txt",
+          "text": "delete me"
+        }
+      ],
+      "cleanup": [
+        "~/Desktop/NewJev_Bench_delete.txt"
+      ],
+      "goal": "Delete the file NewJev_Bench_delete.txt from the Desktop.",
+      "checks": [
+        {
+          "type": "not_exists",
+          "path": "~/Desktop/NewJev_Bench_delete.txt"
+        }
+      ]
+    },
+    {
+      "id": "calculator_divide",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "calculator",
+      "goal": "Calculate 1250 divided by 25 in Calculator.",
+      "checks": [
+        {
+          "type": "text_contains_any",
+          "mode": "desktop",
+          "texts": [
+            "Display is 50",
+            "= 50"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "calculator_to_notepad",
+      "tags": [
+        "desktop",
+        "multi_app"
+      ],
+      "goal": "Calculate 144 multiplied by 12 in Calculator, copy the result, then open Notepad and paste it.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "1728"
+        }
+      ]
+    },
+    {
+      "id": "explorer_new_folder",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "explorer downloads",
+      "cleanup": [
+        "~/Downloads/NewJev_Bench_Folder"
+      ],
+      "goal": "In the Downloads folder, create a new folder named NewJev_Bench_Folder.",
+      "checks": [
+        {
+          "type": "dir_exists",
+          "path": "~/Downloads/NewJev_Bench_Folder"
+        }
+      ]
+    },
+    {
+      "id": "explorer_rename",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "explorer downloads",
+      "setup": [
+        {
+          "type": "make_dir",
+          "path": "~/Downloads/NewJev_Bench_Old"
+        }
+      ],
+      "cleanup": [
+        "~/Downloads/NewJev_Bench_Old",
+        "~/Downloads/NewJev_Bench_New"
+      ],
+      "goal": "Rename the folder NewJev_Bench_Old in Downloads to NewJev_Bench_New.",
+      "checks": [
+        {
+          "type": "dir_exists",
+          "path": "~/Downloads/NewJev_Bench_New"
+        },
+        {
+          "type": "not_exists",
+          "path": "~/Downloads/NewJev_Bench_Old"
+        }
+      ]
+    },
+    {
+      "id": "settings_display",
+      "tags": [
+        "desktop"
+      ],
+      "mode": "desktop",
+      "url": "settings",
+      "goal": "Open the Display page in Windows Settings.",
+      "checks": [
+        {
+          "type": "text_contains_any",
+          "mode": "desktop",
+          "texts": [
+            "Brightness",
+            "Scale",
+            "Display resolution"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "word_type",
+      "tags": [
+        "desktop",
+        "office"
+      ],
+      "mode": "desktop",
+      "url": "word",
+      "goal": "Create a new blank document in Word and type 'Quarterly summary'.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "Quarterly summary"
+        }
+      ]
+    },
+    {
+      "id": "excel_cells",
+      "tags": [
+        "desktop",
+        "office"
+      ],
+      "mode": "desktop",
+      "url": "excel",
+      "goal": "Create a blank workbook in Excel, type 'Revenue' in cell A1 and 1200 in cell B1.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "Revenue"
+        },
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "1200"
+        }
+      ]
+    },
+    {
+      "id": "wiki_to_notepad",
+      "tags": [
+        "web",
+        "desktop",
+        "multi_app"
+      ],
+      "goal": "Open the Wikipedia article for 'Python (programming language)', copy its title, then open Notepad and paste it.",
+      "checks": [
+        {
+          "type": "text_contains",
+          "mode": "desktop",
+          "text": "Python"
+        }
+      ]
+    },
+    {
+      "id": "excel_sort",
+      "tags": [
+        "desktop",
+        "office",
+        "excel"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "excel_data",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx",
+          "rows": [
+            [
+              "Region",
+              "Product",
+              "Units",
+              "Sales"
+            ],
+            [
+              "West",
+              "Pens",
+              10,
+              120
+            ],
+            [
+              "East",
+              "Pads",
+              4,
+              300
+            ],
+            [
+              "West",
+              "Ink",
+              7,
+              90
+            ],
+            [
+              "North",
+              "Pens",
+              12,
+              150
+            ],
+            [
+              "East",
+              "Ink",
+              3,
+              45
+            ],
+            [
+              "North",
+              "Pads",
+              9,
+              410
+            ]
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_sales.xlsx"
+      ],
+      "goal": "Open NewJev_Bench_sales.xlsx from Documents, sort the table by the Sales column from largest to smallest, and save it.",
+      "checks": [
+        {
+          "type": "excel_column_sorted",
+          "column": "D",
+          "descending": true,
+          "path": "~/Documents/NewJev_Bench_sales.xlsx"
+        }
+      ]
+    },
+    {
+      "id": "excel_filter",
+      "tags": [
+        "desktop",
+        "office",
+        "excel"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "excel_data",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx",
+          "rows": [
+            [
+              "Region",
+              "Product",
+              "Units",
+              "Sales"
+            ],
+            [
+              "West",
+              "Pens",
+              10,
+              120
+            ],
+            [
+              "East",
+              "Pads",
+              4,
+              300
+            ],
+            [
+              "West",
+              "Ink",
+              7,
+              90
+            ],
+            [
+              "North",
+              "Pens",
+              12,
+              150
+            ],
+            [
+              "East",
+              "Ink",
+              3,
+              45
+            ],
+            [
+              "North",
+              "Pads",
+              9,
+              410
+            ]
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_sales.xlsx"
+      ],
+      "goal": "Open NewJev_Bench_sales.xlsx from Documents, filter the table so only rows with Region 'West' are shown, and save it.",
+      "checks": [
+        {
+          "type": "excel_autofilter",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx"
+        }
+      ]
+    },
+    {
+      "id": "excel_pivot",
+      "tags": [
+        "desktop",
+        "office",
+        "excel"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "excel_data",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx",
+          "rows": [
+            [
+              "Region",
+              "Product",
+              "Units",
+              "Sales"
+            ],
+            [
+              "West",
+              "Pens",
+              10,
+              120
+            ],
+            [
+              "East",
+              "Pads",
+              4,
+              300
+            ],
+            [
+              "West",
+              "Ink",
+              7,
+              90
+            ],
+            [
+              "North",
+              "Pens",
+              12,
+              150
+            ],
+            [
+              "East",
+              "Ink",
+              3,
+              45
+            ],
+            [
+              "North",
+              "Pads",
+              9,
+              410
+            ]
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_sales.xlsx"
+      ],
+      "goal": "Open NewJev_Bench_sales.xlsx from Documents, create a pivot table on a new sheet that shows the total Sales per Region, and save it.",
+      "checks": [
+        {
+          "type": "excel_has_pivot",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx"
+        }
+      ]
+    },
+    {
+      "id": "excel_formula",
+      "tags": [
+        "desktop",
+        "office",
+        "excel"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "excel_data",
+          "path": "~/Documents/NewJev_Bench_sales.xlsx",
+          "rows": [
+            [
+              "Region",
+              "Product",
+              "Units",
+              "Sales"
+            ],
+            [
+              "West",
+              "Pens",
+              10,
+              120
+            ],
+            [
+              "East",
+              "Pads",
+              4,
+              300
+            ],
+            [
+              "West",
+              "Ink",
+              7,
+              90
+            ],
+            [
+              "North",
+              "Pens",
+              12,
+              150
+            ],
+            [
+              "East",
+              "Ink",
+              3,
+              45
+            ],
+            [
+              "North",
+              "Pads",
+              9,
+              410
+            ]
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_sales.xlsx"
+      ],
+      "goal": "Open NewJev_Bench_sales.xlsx from Documents. In column E add the header 'Revenue' and, for every row, a formula Units times Sales. Save it.",
+      "checks": [
+        {
+          "type": "excel_cells",
+          "cells": {
+            "E1": "Revenue",
+            "E2": "1200",
+            "E7": "3690"
+          },
+          "path": "~/Documents/NewJev_Bench_sales.xlsx"
+        }
+      ]
+    },
+    {
+      "id": "word_heading",
+      "tags": [
+        "desktop",
+        "office",
+        "word"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "word_doc",
+          "path": "~/Documents/NewJev_Bench_report.docx",
+          "paragraphs": [
+            "Quarterly Report",
+            "This draft summarises the quarter.",
+            "Revenue grew 12% in the draft period.",
+            "Next steps follow."
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_report.docx"
+      ],
+      "goal": "Open NewJev_Bench_report.docx from Documents, apply the Heading 1 style to the first line 'Quarterly Report', and save it.",
+      "checks": [
+        {
+          "type": "word_style",
+          "text": "Quarterly Report",
+          "style_contains": "Heading 1",
+          "path": "~/Documents/NewJev_Bench_report.docx"
+        }
+      ]
+    },
+    {
+      "id": "word_replace",
+      "tags": [
+        "desktop",
+        "office",
+        "word"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "word_doc",
+          "path": "~/Documents/NewJev_Bench_report.docx",
+          "paragraphs": [
+            "Quarterly Report",
+            "This draft summarises the quarter.",
+            "Revenue grew 12% in the draft period.",
+            "Next steps follow."
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_report.docx"
+      ],
+      "goal": "Open NewJev_Bench_report.docx from Documents, replace every 'draft' with 'final', and save it.",
+      "checks": [
+        {
+          "type": "word_not_contains",
+          "text": "draft",
+          "path": "~/Documents/NewJev_Bench_report.docx"
+        },
+        {
+          "type": "word_contains",
+          "text": "final",
+          "path": "~/Documents/NewJev_Bench_report.docx"
+        }
+      ]
+    },
+    {
+      "id": "word_table",
+      "tags": [
+        "desktop",
+        "office",
+        "word"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "word_doc",
+          "path": "~/Documents/NewJev_Bench_report.docx",
+          "paragraphs": [
+            "Quarterly Report",
+            "This draft summarises the quarter.",
+            "Revenue grew 12% in the draft period.",
+            "Next steps follow."
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_report.docx"
+      ],
+      "goal": "Open NewJev_Bench_report.docx from Documents, insert a table with 3 columns and 2 rows at the end of the document, and save it.",
+      "checks": [
+        {
+          "type": "word_tables",
+          "min": 1,
+          "path": "~/Documents/NewJev_Bench_report.docx"
+        }
+      ]
+    },
+    {
+      "id": "word_header",
+      "tags": [
+        "desktop",
+        "office",
+        "word"
+      ],
+      "mode": "desktop",
+      "setup": [
+        {
+          "type": "word_doc",
+          "path": "~/Documents/NewJev_Bench_report.docx",
+          "paragraphs": [
+            "Quarterly Report",
+            "This draft summarises the quarter.",
+            "Revenue grew 12% in the draft period.",
+            "Next steps follow."
+          ]
+        }
+      ],
+      "cleanup": [
+        "~/Documents/NewJev_Bench_report.docx"
+      ],
+      "goal": "Open NewJev_Bench_report.docx from Documents, add a page header with the text 'Confidential', and save it.",
+      "checks": [
+        {
+          "type": "word_header_contains",
+          "text": "Confidential",
+          "path": "~/Documents/NewJev_Bench_report.docx"
+        }
+      ]
+    }
+  ]
+}

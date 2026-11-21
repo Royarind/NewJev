@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NewJev Agent - needs you</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #161b22; color: #e6edf3; font: 13px "Segoe UI", system-ui, sans-serif;
+         border-top: 3px solid #d29922; }
+  .box { padding: 12px 14px; }
+  .brand { color: #58a6ff; font-weight: 700; font-size: 12px; }
+  h1 { font-size: 15px; margin: 6px 0 4px; }
+  p { margin: 0; white-space: pre-wrap; line-height: 1.4; }
+  textarea { width: 100%; box-sizing: border-box; margin-top: 8px; background: #0d1117; color: #e6edf3;
+             border: 1px solid #30363d; border-radius: 6px; padding: 6px; font: inherit; }
+  .bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  button { border: none; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer;
+           background: #30363d; color: #e6edf3; }
+  .primary { background: #238636; color: #fff; } .blue { background: #1f6feb; color: #fff; }
+  .danger { background: #da3633; color: #fff; }
+  .note { color: #8b949e; font-size: 11px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="brand">&#9889; NewJev</div>
+  <h1 id="t"></h1>
+  <p id="m"></p>
+  <textarea id="hint" rows="2" style="display:none" placeholder="Your hint for the agent"></textarea>
+  <div class="bar" id="bar"></div>
+  <div class="note" id="note">You can also answer in the NewJev window.</div>
+</div>
+<script>
+const raw = new URLSearchParams(location.search).get('p') || '';
+const p = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw), c => c.charCodeAt(0))));
+document.getElementById('t').textContent = p.title;
+document.getElementById('m').textContent = p.message;
+const hint = document.getElementById('hint');
+if (p.hint) { hint.style.display = 'block'; hint.focus(); }
+const note = document.getElementById('note');
+for (const b of p.buttons) {
+  const el = document.createElement('button');
+  el.textContent = b.label; el.className = b.style || '';
+  el.onclick = async () => {
+    let text = b.text || null;
+    if (b.use_entry) { text = hint.value.trim(); if (!text) { note.textContent = 'Type a hint first.'; return; } }
+    const r = await fetch('/api/respond', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: p.request_id, approved: !!b.approved, remember: !!b.remember, text }) });
+    note.textContent = r.ok ? 'Done.' : 'Already answered.';
+    setTimeout(() => window.close(), 400);
+  };
+  document.getElementById('bar').appendChild(el);
+}
+setInterval(async () => {
+  try { const r = await (await fetch('/api/requests/' + p.request_id)).json(); if (!r.pending) window.close(); }
+  catch (_) {}
+}, 1500);
+</script>
+</body>
+</html>

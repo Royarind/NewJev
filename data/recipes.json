@@ -1,0 +1,230 @@
+{
+ "recipes": [
+  {
+   "id": "ae123c0d2f",
+   "app": "desktop:notepad.exe",
+   "task": "Open Notepad and type a short paragraph about the ocean.",
+   "steps": [
+    "Click inside the main Text editor area of the Untitled - Notepad window to place the cursor.",
+    "Type: The ocean stretches endlessly to the horizon, its waves rising and falling in a steady rhythm. Beneath the surface, sunlight fades into deep blue shadows where countless creatures swim among coral reefs and drifting kelp. The salty breeze and the sound of breaking waves remind us how vast and powerful the sea truly is.",
+    "Verify that the paragraph now appears in the Text editor and the tab title shows the document as modified."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-02T02:17:49",
+   "updated": "2026-10-02T02:17:49",
+   "example_request": "Open Notepad and type a short paragraph about the ocean",
+   "uses": 1
+  },
+  {
+   "id": "c4acbe47c9",
+   "app": "desktop:notepad.exe",
+   "task": "Open Notepad, type the message \"Dear team, the meeting moved to 3:30 PM (Room #4B) – please confirm by Friday!\" and save the file in the Documents folder with the name NewJev_T01_notice.txt",
+   "steps": [
+    "Click in the Text editor area of the Untitled - Notepad window.",
+    "Type: Dear team, the meeting moved to 3:30 PM (Room #4B) – please confirm by Friday!",
+    "Press Ctrl+S to open the Save As dialog.",
+    "In the Save As dialog, click Documents in the left navigation pane (or type the Documents path in the address bar and press Enter).",
+    "Click the File name field and type: NewJev_T01_notice.txt",
+    "Set Save as type to Text Documents (*.txt).",
+    "Click the Save button (Alt+S).",
+    "If a confirm-overwrite or extension dialog appears, click Yes/OK.",
+    "Verify the title bar now shows NewJev_T01_notice.txt - Notepad."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-02T21:35:20",
+   "updated": "2026-10-02T21:35:20",
+   "example_request": "Open Notepad, type \"Dear team, the meeting moved to 3:30 PM (Room #4B) – please confirm by Friday!\" and save it in Documents as NewJev_T01_notice.txt"
+  },
+  {
+   "id": "197b80ea25",
+   "app": "desktop:explorer.exe",
+   "task": "Open the existing file NewJev_T01_notice.txt from the Documents folder (e.g. via Notepad's File > Open or by opening notepad with the file path C:\\Users\\<username>\\Documents\\NewJev_T01_notice.txt). Do not create a new document. In the file, replace the text \"3:30 PM\" with \"4:00 PM\" (e.g. using Ctrl+H or manual edit), then save the file with Ctrl+S. (The existing file is C:\\Users\\prediQt\\Documents\\NewJev_T01_notice.txt — open it, do not create a new one.)",
+   "steps": [
+    "In the Documents folder, double-click the file \"NewJev_T01_notice\" to open it in Notepad.",
+    "In Notepad, press Ctrl+H to open the Replace dialog.",
+    "Type \"3:30 PM\" into the \"Find what\" field.",
+    "Press Tab to move to the \"Replace with\" field and type \"4:00 PM\".",
+    "Click \"Replace All\" (Alt+A).",
+    "Press Esc to close the Replace dialog.",
+    "Press Ctrl+S to save the file.",
+    "Close Notepad (Alt+F4)."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-03T00:38:50",
+   "updated": "2026-10-03T00:38:50",
+   "example_request": "Open NewJev_T01_notice.txt from Documents and replace \"3:30 PM\" with \"4:00 PM\", then save",
+   "uses": 1
+  },
+  {
+   "id": "f12e3fc3cd",
+   "app": "desktop:explorer.exe",
+   "task": "Open the existing file NewJev_T01_notice.txt from the Documents folder in Notepad (do not create a new document), replace the text \"4:00 PM\" with \"4:30 PM\" (use Find and Replace or edit directly), then save the file. (The existing file is C:\\Users\\prediQt\\Documents\\NewJev_T01_notice.txt — open it, do not create a new one.)",
+   "steps": [
+    "In the Documents - File Explorer window, click once on the file \"NewJev_T01_notice\" to select it, then press Enter to open it (opens in Notepad).",
+    "If it does not open in Notepad, right-click \"NewJev_T01_notice\", choose Open with > Notepad.",
+    "In Notepad, press Ctrl+H to open the Replace dialog.",
+    "Click the \"Find what\" field and type: 4:00 PM",
+    "Click the \"Replace with\" field and type: 4:30 PM",
+    "Click the \"Replace All\" button (Alt+A).",
+    "Click Cancel or the X to close the Replace dialog.",
+    "Press Ctrl+S to save the file.",
+    "Close Notepad (Alt+F4)."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-03T00:50:44",
+   "updated": "2026-10-03T00:50:44",
+   "example_request": "Open NewJev_T01_notice.txt from Documents and replace \"4:00 PM\" with \"4:30 PM\", then save"
+  },
+  {
+   "id": "b99ba9401b",
+   "app": "desktop:explorer.exe",
+   "task": "List the contents of the folder Documents\\NewJev_T05 and report how many files it contains.",
+   "steps": [
+    "In the Documents folder file list, double-click the \"NewJev_T05\" folder to open it.",
+    "Wait for the folder contents to load; the items inside are now listed in the main pane.",
+    "Look at the left end of the status bar at the bottom of the window, which shows the item count (e.g. \"N items\"), and note that number.",
+    "Read the names of the files and folders shown in the list (click the View menu and choose \"Details\" if more columns are needed).",
+    "Report the listed names and the file count from the status bar."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-03T03:09:24",
+   "updated": "2026-10-03T03:09:24",
+   "example_request": "List what is inside Documents\\NewJev_T05 and tell me how many files there are"
+  },
+  {
+   "id": "0516441acb",
+   "app": "desktop:explorer.exe",
+   "task": "Open the folder Documents\\Rsm_Rini in File Explorer, list its contents, and report how many files are inside it.",
+   "steps": [
+    "In the Documents folder list, double-click the \"Rsm_Rini\" folder to open it (or click the Address Bar, type Documents\\Rsm_Rini, and press Enter).",
+    "Read the folder contents shown in the file list (Name column); press F5 to refresh if the list looks stale.",
+    "Click an empty area of the file list, then press Ctrl+A to select all items.",
+    "Look at the status bar at the bottom-left of the window, which shows the total item count (e.g. \"N items\" / \"N items selected\").",
+    "Note each item name shown in the list and whether it is a file or folder; subtract any subfolders from the total if only files are to be counted.",
+    "Report the list of contents and the number of files inside Rsm_Rini."
+   ],
+   "source": "procedure",
+   "successes": 1,
+   "created": "2026-10-03T03:49:24",
+   "updated": "2026-10-03T03:49:24",
+   "example_request": "List what is inside Documents\\Rsm_Rini and tell me how many files there are there"
+  },
+  {
+   "id": "927f250601",
+   "app": "web:x.test",
+   "task": "type hi and send",
+   "steps": [
+    "TYPE_TEXT 'Message' (value used last time: 'hi')",
+    "CLICK 'Send'"
+   ],
+   "source": "actions",
+   "successes": 1,
+   "created": "2026-10-04T22:33:58",
+   "updated": "2026-10-04T22:33:58"
+  }
+ ],
+ "failures": [
+  {
+   "app": "desktop:notepad.exe",
+   "task": "Open Notepad and type a short paragraph about the ocean into it.",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: TYPE_TEXT 'Text editor'. Try a different approach early.",
+   "ts": "2026-10-02T02:03:58"
+  },
+  {
+   "app": "desktop:notepad.exe",
+   "task": "Open Notepad and create a new text file containing the text \"line one\" on the first line and \"line two\" on the second line. Save it as NewJev_ops.txt on the Desktop (C:\\Users\\<username>\\Desktop). Close Notepad after saving.",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: TYPE_TEXT 'File name:', CLICK 'Save', CLICK 'Yes', CLOSE_WINDOW 'Close the active window (only windows op'. Try a different approach early.",
+   "ts": "2026-10-02T03:02:20"
+  },
+  {
+   "app": "desktop:explorer.exe",
+   "task": "In File Explorer, go to the Documents folder and create a new folder called NewJev_Folder2. Copy the existing file NewJev_ops.txt from the Desktop into Documents\\NewJev_Folder2. Then rename the copied file NewJev_ops.txt inside Documents\\NewJev_Folder2 to NewJev_renamed.txt, leaving the original file on the Desktop unchanged.",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: FILE_OP 'Direct file operation: copy, move, renam', FILE_OP 'Direct file operation: copy, move, renam', FILE_OP 'Direct file operation: copy, move, renam'. Try a different approach early.",
+   "ts": "2026-10-02T03:02:56"
+  },
+  {
+   "app": "desktop:explorer.exe",
+   "task": "In Notepad, open the existing file NewJev_T01_notice.txt from the Documents folder (do not create a new document). Find the text \"3:30 PM\" and replace it with \"4:00 PM\", then save the file (Ctrl+S), keeping the same file name and location. (The existing file is C:\\Users\\prediQt\\Documents\\NewJev_T01_notice.txt — open it, do not create a new one.)",
+   "status": "blocked",
+   "lesson": "Previously ended 'blocked' (fell back into the same loop after being warned); tried: DOUBLE_CLICK 'NewJev_T01_notice', WAIT 'Wait for the application', WAIT 'Wait for the application', WAIT 'Wait for the application'. Try a different approach early.",
+   "ts": "2026-10-02T22:52:14"
+  },
+  {
+   "app": "desktop:explorer.exe",
+   "task": "Open the existing file c.txt from Documents\\NewJev_T05 and read its full content. Then open a new Notepad window and type the file's content into it exactly, character for character, preserving line breaks. (The existing file is C:\\Users\\prediQt\\Documents\\NewJev_T05\\c.txt — open it, do not create a new one.)",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: COPY_TEXT 'Copy text shown in the app to the clipbo', CLICK 'File', CLICK 'New window', PRESS_KEY 'Ctrl+V (paste)'. Try a different approach early.",
+   "ts": "2026-10-03T18:18:43"
+  },
+  {
+   "app": "web:google.com",
+   "task": "Find a one-way flight from Bombay (Mumbai) to Goa on 23 October 2026 and report the three cheapest options with their details (airline, departure/arrival times, duration, stops, and price).",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: SCROLL_DOWN 'Scroll down', CLICK 'Go back', CLICK 'Sorted by top flights, Change sort order', CLICK 'Price'. Try a different approach early.",
+   "ts": "2026-10-04T17:16:45"
+  },
+  {
+   "app": "desktop:explorer.exe",
+   "task": "Notepad is open and contains a written summary about Agentic AI (definition, key characteristics, how it works, examples/applications, and benefits/challenges).",
+   "status": "unverified",
+   "lesson": "Previously ended 'unverified' (DONE could not be verified); tried: LAUNCH_APP 'Launch an application', TYPE_TEXT 'Text editor', PRESS_KEY 'Ctrl+S (save)', APPEND_TEXT 'Text editor'. Try a different approach early.",
+   "ts": "2026-11-21T20:24:57"
+  }
+ ],
+ "plans": [
+  {
+   "id": "4ad85409ec",
+   "request": "Open NewJev_T01_notice.txt from Documents and replace \"3:30 PM\" with \"4:00 PM\", then save",
+   "goal": "Open the existing file NewJev_T01_notice.txt from the Documents folder, replace the text \"3:30 PM\" with \"4:00 PM\", and save the file.",
+   "steps": [
+    {
+     "task": "Open the existing file NewJev_T01_notice.txt from the Documents folder (e.g. via Notepad's File > Open or by opening notepad with the file path C:\\Users\\<username>\\Documents\\NewJev_T01_notice.txt). Do not create a new document. In the file, replace the text \"3:30 PM\" with \"4:00 PM\" (e.g. using Ctrl+H or manual edit), then save the file with Ctrl+S. (The existing file is C:\\Users\\prediQt\\Documents\\NewJev_T01_notice.txt — open it, do not create a new one.)",
+     "mode": "desktop",
+     "url": "explorer C:\\Users\\prediQt\\Documents",
+     "existing_file": "C:\\Users\\prediQt\\Documents\\NewJev_T01_notice.txt"
+    }
+   ],
+   "successes": 3,
+   "created": "2026-10-03T00:38:50",
+   "updated": "2026-10-03T00:50:44"
+  },
+  {
+   "id": "a02b8fa1d6",
+   "request": "List what is inside Documents\\NewJev_T05 and tell me how many files there are",
+   "goal": "List the contents of the folder Documents\\NewJev_T05 and report how many files it contains.",
+   "steps": [
+    {
+     "task": "Open the existing folder NewJev_T05 inside the Documents folder in File Explorer, list everything inside it (files and subfolders), and count how many files there are. Report the list of items and the total file count.",
+     "mode": "desktop",
+     "url": "explorer C:\\Users\\<username>\\Documents\\NewJev_T05"
+    }
+   ],
+   "successes": 1,
+   "created": "2026-10-03T03:09:24",
+   "updated": "2026-10-03T03:09:24"
+  },
+  {
+   "id": "227d12b992",
+   "request": "List what is inside Documents\\Rsm_Rini and tell me how many files there are there",
+   "goal": "Open the folder Documents\\Rsm_Rini in File Explorer, list its contents, and report how many files are inside it.",
+   "steps": [
+    {
+     "task": "Open the existing folder Rsm_Rini inside the Documents folder (C:\\Users\\<user>\\Documents\\Rsm_Rini) in File Explorer. List every item it contains (names and whether file or folder), count how many files there are (excluding subfolders from the file count unless they are files inside subfolders that are visible), and report the list and the total file count to the user.",
+     "mode": "desktop",
+     "url": "explorer Documents\\Rsm_Rini"
+    }
+   ],
+   "successes": 1,
+   "created": "2026-10-03T03:49:24",
+   "updated": "2026-10-03T03:49:24"
+  }
+ ]
+}

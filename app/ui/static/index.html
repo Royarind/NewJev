@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NewJev Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">&#9889; NewJev</span>
+        <span class="tagline">Computer Use Agent &mdash; Powered by Jev</span>
+      </div>
+      <div class="header-right">
+        <span class="status-dot" id="conn-dot"></span>
+        <span class="status-label" id="conn-label">Connecting...</span>
+        <button class="btn-small" id="history-btn" title="Past runs: steps, screenshots, cost; run again">&#128339; History</button>
+        <button class="btn-small" id="connections-btn" title="Connect Slack, Microsoft 365 (Teams, calendar, OneDrive), Gmail">&#128268; Connections</button>
+        <button class="btn-small" id="tasks-btn" title="Saved tasks, schedules and folder triggers">&#128203; Tasks</button>
+        <button class="btn-small" id="close-app-btn" title="Close Active Browser/App Window">&#10005; Close Window</button>
+        <button class="btn-icon" id="config-btn" title="Configuration">&#9881;</button>
+      </div>
+    </header>
+
+    <!-- Main layout -->
+    <div class="main">
+      <!-- Left: Chat -->
+      <div class="chat-panel">
+        <div class="messages" id="messages">
+          <div class="message assistant">
+            <div class="msg-bubble">
+              <strong>NewJev Agent ready.</strong><br/>
+              Type a goal below &mdash; e.g. <em>&quot;Search for flights from Delhi to Mumbai on Google Flights&quot;</em>
+              or <em>&quot;Open Notepad and write a summary&quot;</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="input-area">
+          <div class="url-row">
+            <input type="text" id="url-input" placeholder="Start URL (optional — e.g. https://flights.google.com)" />
+            <select id="mode-select">
+              <option value="auto" selected>Auto (Detect)</option>
+              <option value="desktop">Desktop App</option>
+              <option value="browser">Web Browser</option>
+            </select>
+          </div>
+          <div class="goal-row">
+            <textarea id="goal-input" rows="2" placeholder="Type your goal here... (Enter to send, Shift+Enter for newline)"></textarea>
+            <button class="btn-mic" id="mic-btn" title="Speak your goal (or an instruction while a run is going)">&#127908;</button>
+            <button class="btn-send" id="send-btn">&#9654; Run</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Inspector -->
+      <div class="inspector-panel">
+        <div class="inspector-header">
+          <span>Live Inspector</span>
+          <button class="btn-small" id="clear-inspector">Clear</button>
+        </div>
+        <div class="inspector-content" id="inspector">
+          <div class="inspector-empty">Agent steps will appear here in real time.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config modal -->
+  <div class="modal-overlay" id="config-modal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Configuration</span>
+        <button class="btn-icon" id="modal-close">&#10005;</button>
+      </div>
+      <div class="modal-body" id="config-body">
+        Loading...
+      </div>
+    </div>
+  </div>
+
+  <!-- History / Tasks panel -->
+  <div class="modal-overlay" id="panel-modal" style="display:none">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <span id="panel-title">History</span>
+        <span>
+          <button class="btn-small" id="panel-back" style="display:none">&#8592; Back</button>
+          <button class="btn-icon" id="panel-close">&#10005;</button>
+        </span>
+      </div>
+      <div class="modal-body" id="panel-body">Loading...</div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

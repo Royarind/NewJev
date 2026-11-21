@@ -1,0 +1,28 @@
+<!doctype html><html><head><title>Bench Shop</title>
+<style>body{font-family:sans-serif;margin:24px} .menu{border:1px solid #ccc;padding:4px;width:160px} [hidden]{display:none}</style></head>
+<body>
+<h1>Bench Shop — T-shirt</h1>
+<div id="size" role="combobox" aria-label="Size" aria-expanded="false" tabindex="0">Size: <span id="sizeval">choose</span></div>
+<div id="menu" class="menu" role="listbox" hidden>
+  <div role="option" aria-label="Small">Small</div><div role="option" aria-label="Medium">Medium</div><div role="option" aria-label="Large">Large</div>
+</div>
+<p><label>Quantity <input id="qty" type="number" min="1" value="1"></label></p>
+<iframe id="gift" srcdoc="<label>Gift message <input id='msg' aria-label='Gift message'></label>" style="width:360px;height:60px;border:0"></iframe>
+<p><button id="add">Add to cart</button></p>
+<p id="cart">Cart: empty</p>
+<script>
+  // a "modern" dropdown: opens on pointerdown only, picks on mousedown (element.click() would not work)
+  const size = document.getElementById('size'), menu = document.getElementById('menu');
+  size.addEventListener('pointerdown', () => { menu.hidden = !menu.hidden; size.setAttribute('aria-expanded', String(!menu.hidden)); });
+  menu.querySelectorAll('[role=option]').forEach(o => o.addEventListener('mousedown', () => {
+    document.getElementById('sizeval').textContent = o.textContent; menu.hidden = true; size.setAttribute('aria-expanded', 'false');
+  }));
+  // React-style: state only updates from real input events
+  let qty = 1; document.getElementById('qty').addEventListener('input', e => { qty = parseInt(e.target.value || '0', 10); });
+  document.getElementById('add').addEventListener('click', () => {
+    const msg = document.getElementById('gift').contentDocument.getElementById('msg').value;
+    const s = document.getElementById('sizeval').textContent;
+    document.getElementById('cart').textContent = s === 'choose' ? 'Cart: please choose a size' :
+      `Cart: ${qty} × ${s}` + (msg ? ` — gift message: ${msg}` : '');
+  });
+</script></body></html>

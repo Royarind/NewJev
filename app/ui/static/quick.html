@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NewJev Quick</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0d1117; color: #e6edf3; font: 14px system-ui, sans-serif; }
+  .box { padding: 14px 16px; }
+  .row { display: flex; gap: 8px; }
+  input { flex: 1; background: #161b22; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; padding: 10px 12px;
+          font-size: 15px; outline: none; }
+  input:focus { border-color: #1f6feb; }
+  button { border: none; border-radius: 8px; padding: 0 14px; cursor: pointer; font-size: 15px; background: #238636; color: #fff; }
+  button.mic { background: #30363d; font-size: 18px; }
+  button.mic.on { background: #da3633; }
+  .hint { color: #8b949e; font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="row">
+    <input id="g" placeholder="Tell NewJev what to do… (Enter to run, Esc to close)" autofocus />
+    <button class="mic" id="mic" title="Speak">&#127908;</button>
+    <button id="go">Run</button>
+  </div>
+  <div class="hint" id="hint">If a run is in progress, this is sent as an instruction to it.</div>
+</div>
+<script>
+const g = document.getElementById('g'), hint = document.getElementById('hint'), mic = document.getElementById('mic');
+async function go() {
+  const goal = g.value.trim();
+  if (!goal) return;
+  hint.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/quick_run', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ goal }) });
+    const d = await r.json();
+    hint.textContent = d.message || 'Sent.';
+    setTimeout(() => window.close(), 700);
+  } catch (e) { hint.textContent = 'NewJev is not reachable: ' + e; }
+}
+document.getElementById('go').onclick = go;
+g.addEventListener('keydown', e => { if (e.key === 'Enter') go(); if (e.key === 'Escape') window.close(); });
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) { mic.style.display = 'none'; }
+else {
+  let rec = null;
+  mic.onclick = () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR(); rec.lang = navigator.language || 'en-US'; rec.interimResults = true;
+    rec.onresult = ev => { g.value = Array.from(ev.results).map(r => r[0].transcript).join(''); };
+    rec.onend = () => { mic.classList.remove('on'); rec = null; if (g.value.trim()) go(); };
+    rec.onerror = ev => { hint.textContent = 'Voice: ' + ev.error; };
+    mic.classList.add('on'); hint.textContent = 'Listening… speak your goal'; rec.start();
+  };
+  if (location.search.includes('voice=1')) mic.click();
+}
+</script>
+</body>
+</html>

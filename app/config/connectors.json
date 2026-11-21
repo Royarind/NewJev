@@ -1,0 +1,8 @@
+{
+  "_comment": "Public client ids of the NewJev apps registered ONCE by the publisher (see README: Connectors - publisher setup). Users never edit this; they just click Connect. Values in .env override these.",
+  "slack_client_id": "",
+  "microsoft_client_id": "",
+  "microsoft_tenant": "organizations",
+  "google_client_id": "",
+  "google_client_secret": ""
+}
