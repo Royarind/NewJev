@@ -275,31 +275,62 @@ class BrowserCapture:
         user_data_dir = Path(s.browser_user_data_dir).resolve()
         user_data_dir.mkdir(parents=True, exist_ok=True)
         _clean_stale_profile_lock(user_data_dir)
-        args = ["--disable-blink-features=AutomationControlled", "--no-first-run", "--no-default-browser-check"]
+        args = [
+            "--disable-blink-features=AutomationControlled",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--start-maximized",          # ensure window is visible & maximized
+        ]
+        if not s.headless:
+            args.append("--window-position=0,0")  # bring to primary screen
         viewport = {"width": s.browser_width, "height": s.browser_height}
         browser_type = getattr(self._pw, s.browser_type, self._pw.chromium)
         channel = s.browser_channel or None
 
+        # Prefer the installed Google Chrome executable if channel='chrome'
+        installed_chrome = Path("C:/Program Files/Google/Chrome/Application/chrome.exe")
+        executable_path: str | None = None
+        if channel == "chrome" and installed_chrome.exists():
+            executable_path = str(installed_chrome)
+            channel = None  # don't pass both channel and executable_path
+
+        launch_kwargs: dict = dict(
+            user_data_dir=str(user_data_dir),
+            headless=s.headless,
+            slow_mo=s.browser_slow_mo,
+            args=args,
+            viewport=viewport,
+        )
+        if channel:
+            launch_kwargs["channel"] = channel
+        if executable_path:
+            launch_kwargs["executable_path"] = executable_path
+
+        logger.info("Launching browser: headless=%s channel=%s exe=%s", s.headless, channel, executable_path)
+
         try:
-            self._context = browser_type.launch_persistent_context(
-                user_data_dir=str(user_data_dir), channel=channel, headless=s.headless,
-                slow_mo=s.browser_slow_mo, args=args, viewport=viewport,
-            )
+            self._context = browser_type.launch_persistent_context(**launch_kwargs)
         except Exception as exc:
-            logger.warning("Persistent launch with channel='%s' failed: %s. Falling back to bundled chromium.", channel, exc)
+            logger.warning("Persistent launch failed: %s. Falling back to bundled chromium.", exc)
             try:
-                self._context = self._pw.chromium.launch_persistent_context(
-                    user_data_dir=str(user_data_dir), headless=s.headless,
-                    slow_mo=s.browser_slow_mo, args=args, viewport=viewport,
-                )
+                fallback_kwargs = dict(launch_kwargs)
+                fallback_kwargs.pop("channel", None)
+                fallback_kwargs.pop("executable_path", None)
+                self._context = self._pw.chromium.launch_persistent_context(**fallback_kwargs)
             except Exception as exc2:
-                logger.warning("Persistent launch failed: %s. Falling back to a temporary profile.", exc2)
+                logger.warning("Persistent chromium launch failed: %s. Falling back to a temporary profile.", exc2)
                 self._browser = browser_type.launch(headless=s.headless, slow_mo=s.browser_slow_mo)
                 self._context = self._browser.new_context(viewport=viewport)
 
         self._apply_stealth(self._context)
         self._page = self._context.pages[-1] if self._context.pages else self._context.new_page()
         self._watch_new_pages()
+        # Bring the browser window to the foreground so it is visually visible
+        if not s.headless:
+            try:
+                self._page.bring_to_front()
+            except Exception:
+                pass
         if url:
             self.navigate(url)
 

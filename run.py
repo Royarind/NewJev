@@ -23,7 +23,7 @@ def load_env() -> None:
     env_path = Path(".env")
     if env_path.exists():
         from dotenv import load_dotenv
-        load_dotenv(dotenv_path=env_path, override=False)
+        load_dotenv(dotenv_path=env_path, override=True)
     else:
         print("[WARNING] .env not found. Copy .env.example to .env and fill in your keys.")
 
