@@ -135,9 +135,10 @@ class FallbackLLM(BaseLLM):
                         if kind == "fatal":
                             raise
                         wait = retry_after_s(exc)
-                        if kind == "rate" and attempt == 0 and wait is not None and wait <= self.retry_after_max_s:
-                            logger.info("%s rate-limited; waiting %.1fs (Retry-After)", label, wait)
-                            self._sleep(wait)
+                        wait_time = wait if wait is not None else 1.5
+                        if kind == "rate" and attempt == 0 and wait_time <= self.retry_after_max_s:
+                            logger.info("%s rate-limited; waiting %.1fs", label, wait_time)
+                            self._sleep(wait_time)
                             continue
                         self._cool(label, max(wait or 0, self.cooldown_s) if kind in ("rate", "config")
                                    else min(self.cooldown_s, 20))
@@ -169,8 +170,9 @@ class FallbackLLM(BaseLLM):
                     if kind == "fatal":
                         raise
                     wait = retry_after_s(exc)
-                    if kind == "rate" and attempt == 0 and wait is not None and wait <= self.retry_after_max_s:
-                        await asyncio.sleep(wait)
+                    wait_time = wait if wait is not None else 1.5
+                    if kind == "rate" and attempt == 0 and wait_time <= self.retry_after_max_s:
+                        await asyncio.sleep(wait_time)
                         continue
                     self._cool(label, max(wait or 0, self.cooldown_s) if kind in ("rate", "config")
                                else min(self.cooldown_s, 20))
