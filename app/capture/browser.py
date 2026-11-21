@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import re
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -103,25 +104,21 @@ def fingerprint(state: dict) -> str:
 def _clean_stale_profile_lock(user_data_dir: Path) -> None:
     """If a previous browser run crashed or was killed, clean up stale lockfiles and orphaned processes."""
     try:
+        import subprocess
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "Get-CimInstance Win32_Process -Filter \"Name = 'chrome.exe'\" | "
+             "Where-Object { $_.CommandLine -like '*chrome_profile*' } | "
+             "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"],
+            capture_output=True, timeout=5
+        )
+        time.sleep(0.3)
         lock_files = [user_data_dir / f for f in ("lockfile", "SingletonLock", "SingletonSocket", "SingletonCookie")]
-        if any(f.exists() for f in lock_files):
-            import subprocess
-            dir_filter = str(user_data_dir).replace("'", "''")
-            cmd = (
-                f'Get-CimInstance Win32_Process -Filter "Name = \'chrome.exe\'" | '
-                f'Where-Object {{ $_.CommandLine -like "*{dir_filter}*" }} | '
-                f'ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}'
-            )
+        for f in lock_files:
             try:
-                subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True, timeout=5)
+                f.unlink(missing_ok=True)
             except Exception:
                 pass
-            time.sleep(0.3)
-            for f in lock_files:
-                try:
-                    f.unlink(missing_ok=True)
-                except Exception:
-                    pass
     except Exception as exc:
         logger.debug("Failed cleaning stale profile lock: %s", exc)
 
@@ -141,6 +138,7 @@ class BrowserCapture:
         self._new_pages: list[Any] = []     # tabs/popups opened since the last observe
         self._opened_pages: list[Any] = []  # tabs opened during this task (closable at the end)
         self._last_download: str | None = None
+        self._chrome_proc: Any = None
 
     # ------------------------------------------------------------ lifecycle
     @property
@@ -275,6 +273,48 @@ class BrowserCapture:
         user_data_dir = Path(s.browser_user_data_dir).resolve()
         user_data_dir.mkdir(parents=True, exist_ok=True)
         _clean_stale_profile_lock(user_data_dir)
+
+        # On Windows, if headless is False, launch real Chrome on WinSta0\Default with CDP
+        # so the browser window is 100% visible on the user's interactive desktop.
+        installed_chrome = Path("C:/Program Files/Google/Chrome/Application/chrome.exe")
+        channel = s.browser_channel or None
+        if not s.headless and sys.platform == "win32" and installed_chrome.exists() and (channel in ("chrome", None)):
+            cdp_port = 9222
+            chrome_cmd = [
+                str(installed_chrome),
+                f"--remote-debugging-port={cdp_port}",
+                f"--user-data-dir={user_data_dir}",
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--start-maximized",
+                "--window-position=0,0",
+                url or "about:blank",
+            ]
+            import subprocess
+            si = subprocess.STARTUPINFO()
+            si.lpDesktop = r"WinSta0\Default"
+            try:
+                self._chrome_proc = subprocess.Popen(chrome_cmd, startupinfo=si)
+                logger.info("Launched Google Chrome on WinSta0\\Default (PID %d)", self._chrome_proc.pid)
+                import urllib.request
+                for _ in range(25):
+                    time.sleep(0.2)
+                    try:
+                        urllib.request.urlopen(f"http://127.0.0.1:{cdp_port}/json/version", timeout=1)
+                        break
+                    except Exception:
+                        pass
+                self._browser = self._pw.chromium.connect_over_cdp(f"http://127.0.0.1:{cdp_port}")
+                self._context = self._browser.contexts[0] if self._browser.contexts else self._browser.new_context()
+                self._apply_stealth(self._context)
+                self._page = self._context.pages[-1] if self._context.pages else self._context.new_page()
+                self._watch_new_pages()
+                if url:
+                    self.navigate(url)
+                return
+            except Exception as exc:
+                logger.warning("CDP launch on WinSta0\\Default failed (%s); falling back to Playwright launch.", exc)
+
         args = [
             "--disable-blink-features=AutomationControlled",
             "--no-first-run",
@@ -889,6 +929,16 @@ class BrowserCapture:
                 self._browser.close()
             if self._pw:
                 self._pw.stop()
+            if getattr(self, "_chrome_proc", None) is not None:
+                try:
+                    self._chrome_proc.terminate()
+                    self._chrome_proc.wait(timeout=2)
+                except Exception:
+                    try:
+                        self._chrome_proc.kill()
+                    except Exception:
+                        pass
+                self._chrome_proc = None
         except Exception as exc:
             logger.warning("Error closing browser: %s", exc)
         finally:
@@ -896,6 +946,7 @@ class BrowserCapture:
             self._page = None
             self._context = None
             self._pw = None
+            self._chrome_proc = None
 
     def __enter__(self) -> "BrowserCapture":
         return self
