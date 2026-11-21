@@ -200,7 +200,7 @@ def _extract_field_value(raw: str | dict | None) -> str | None:
         if obj:
             content = obj.group(0)
     try:
-        data = json.loads(content)
+        data = json.loads(content, strict=False)
         if isinstance(data, dict) and data.get("text") is not None:
             v = str(data["text"]).strip()
             return v if v and len(v) <= 4000 else None
@@ -227,14 +227,14 @@ def _extract_json_object(raw: str | None) -> dict | None:
     if not m:
         return None
     try:
-        data = json.loads(m.group(0))
+        data = json.loads(m.group(0), strict=False)
     except Exception:
         return None
     if isinstance(data, dict) and set(data) == {"text"}:
         inner = data["text"]
         if isinstance(inner, str):
             try:
-                inner = json.loads(inner)
+                inner = json.loads(inner, strict=False)
             except Exception:
                 return None
         data = inner

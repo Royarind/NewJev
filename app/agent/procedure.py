@@ -23,6 +23,7 @@ Rules:
   keyboard shortcuts in brackets, e.g. "Open the Data tab and click Sort (Alt+A, S, S)".
 - Spreadsheets: select ranges by typing the address in the Name Box (e.g. "A1:F200" or "X:X") and pressing Enter.
 - Formatting needs the text selected first. Saving: Ctrl+S, or F12 for Save As in Office.
+- For websites / web browsers: never use Ctrl+F (in-page find is not supported); use visible on-page search boxes, filters, product links, or scrolling.
 - Include the finishing steps the task implies (confirm dialogs with OK, save if the task edits a file).
 - Do not include opening the app if the current window already is that app.
 - Never include steps that delete files or data unless the task asks for it.
