@@ -100,6 +100,32 @@ def fingerprint(state: dict) -> str:
     return hashlib.sha256(json.dumps(content, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 
+def _clean_stale_profile_lock(user_data_dir: Path) -> None:
+    """If a previous browser run crashed or was killed, clean up stale lockfiles and orphaned processes."""
+    try:
+        lock_files = [user_data_dir / f for f in ("lockfile", "SingletonLock", "SingletonSocket", "SingletonCookie")]
+        if any(f.exists() for f in lock_files):
+            import subprocess
+            dir_filter = str(user_data_dir).replace("'", "''")
+            cmd = (
+                f'Get-CimInstance Win32_Process -Filter "Name = \'chrome.exe\'" | '
+                f'Where-Object {{ $_.CommandLine -like "*{dir_filter}*" }} | '
+                f'ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}'
+            )
+            try:
+                subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True, timeout=5)
+            except Exception:
+                pass
+            time.sleep(0.3)
+            for f in lock_files:
+                try:
+                    f.unlink(missing_ok=True)
+                except Exception:
+                    pass
+    except Exception as exc:
+        logger.debug("Failed cleaning stale profile lock: %s", exc)
+
+
 class BrowserCapture:
     """Manages a Playwright browser session: observe() → structured state, act() → real input."""
 
@@ -248,6 +274,7 @@ class BrowserCapture:
 
         user_data_dir = Path(s.browser_user_data_dir).resolve()
         user_data_dir.mkdir(parents=True, exist_ok=True)
+        _clean_stale_profile_lock(user_data_dir)
         args = ["--disable-blink-features=AutomationControlled", "--no-first-run", "--no-default-browser-check"]
         viewport = {"width": s.browser_width, "height": s.browser_height}
         browser_type = getattr(self._pw, s.browser_type, self._pw.chromium)

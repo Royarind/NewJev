@@ -57,9 +57,12 @@ class OpenAICompatLLM(BaseLLM):
         )
 
     def _build_params(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        temp = kwargs.get("temperature", self.temperature)
+        if "moonshot" in str(self._client.base_url).lower() or "kimi" in self.model.lower():
+            temp = 1.0
         params: dict[str, Any] = {
             "model": self.model,
-            "temperature": kwargs.get("temperature", self.temperature),
+            "temperature": temp,
             "max_tokens": kwargs.get("max_tokens", self.max_tokens),
             "top_p": kwargs.get("top_p", self.top_p),
             "frequency_penalty": kwargs.get("frequency_penalty", self.frequency_penalty),

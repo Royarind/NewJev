@@ -114,10 +114,18 @@ Rules:
 """
 
 VALID_MODES = {"browser", "desktop"}
-WEB_HINT = re.compile(r"https?://|www\.|\.com\b|gmail|google|youtube|wikipedia|website|web page|online|flight", re.I)
-DESKTOP_HINT = re.compile(r"\b(excel|word|powerpoint|outlook|notepad|calculator|calc|paint|file explorer|explorer|"
-                          r"folder|desktop|documents|downloads|settings|terminal|command prompt|vs ?code|"
-                          r"workbook|spreadsheet|\.xlsx|\.docx|\.pptx|\.txt)\b", re.I)
+WEB_HINT = re.compile(
+    r"https?://|www\.|\.com\b|\.in\b|\.org\b|\.net\b|\.io\b|gmail|google|youtube|wikipedia|"
+    r"website|web page|online|flight|amazon|flipkart|times of india|\btoi\b|reddit|twitter|news",
+    re.I,
+)
+DESKTOP_HINT = re.compile(
+    r"\b(excel|word|powerpoint|outlook|notepad|calculator|calc|paint|file explorer|explorer|"
+    r"folder|desktop|documents|downloads|settings|terminal|command prompt|vs ?code|"
+    r"workbook|spreadsheet|\.xlsx|\.docx|\.pptx|\.txt|taskbar|speaker|volume|sound|audio|"
+    r"mute|tray|system tray|start menu|bluetooth|wifi|network|battery|brightness)\b",
+    re.I,
+)
 _URL = re.compile(r"https?://\S+|www\.\S+", re.I)
 
 
