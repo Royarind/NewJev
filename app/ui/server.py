@@ -731,8 +731,22 @@ def create_app() -> FastAPI:
                 await _run_job(session_id, job, url, forced_mode)
                 return
 
+        context = {
+            "active_url": session.get("last_url"),
+            "last_goal": session.get("last_goal"),
+            "last_report": session.get("last_report"),
+        }
+        # If browser capture is already active in session, grab its current URL
+        if not context["active_url"] and "captures" in session:
+            try:
+                b_cap = session["captures"]._captures.get("browser")
+                if b_cap and hasattr(b_cap, "_page") and b_cap._page and not b_cap._page.is_closed():
+                    context["active_url"] = b_cap._page.url
+            except Exception:
+                pass
+
         try:
-            plan = await get_planner().aplan(goal)
+            plan = await get_planner().aplan(goal, context=context)
         except Exception as exc:
             logger.warning("Planner failed (%s); continuing with raw goal.", exc)
             from ..agent.planner import fallback_plan
@@ -750,6 +764,12 @@ def create_app() -> FastAPI:
                 st["mode"] = forced_mode
         if url:
             steps[0]["url"] = url
+        elif not steps[0].get("url") and (session.get("last_url") or context.get("active_url")):
+            # Auto-inherit the active page URL if referring to the page
+            active_page = session.get("last_url") or context.get("active_url")
+            if re.search(r"\b(in the page|on the page|this page|that page|from the page|the page|webpage|page)\b", goal, re.I):
+                steps[0]["url"] = active_page
+                logger.info("Inherited active page URL '%s' for goal '%s'", active_page, goal)
         effective_goal = plan["goal"]
         session["goal"] = effective_goal
 
@@ -781,26 +801,39 @@ def create_app() -> FastAPI:
 
         # 1. Ask-decision flow: if planner returned ask, request user clarification
         if plan.get("decision") == "ask" and plan.get("clarification_question"):
-            question = plan["clarification_question"]
-            await manager.send(session_id, "status", {
-                "status": "needs_user",
-                "message": question,
-            })
-            clarification = await _in_session_thread(session_id, reviewer.hint, question)
-            if not clarification:
-                await manager.send(session_id, "result", {
+            # Check if clarification can be resolved from active session context before pausing
+            q_lower = str(plan["clarification_question"]).lower()
+            last_url = session.get("last_url") or context.get("active_url")
+            last_goal = session.get("last_goal")
+            if (last_url or last_goal) and any(w in q_lower for w in ("which page", "what page", "url", "who is", "who", "page")):
+                logger.info("Planner asked '%s' but session has active context (url=%s, last_goal=%s); auto-resolving.",
+                            plan["clarification_question"], last_url, last_goal)
+                plan["decision"] = "act"
+                if last_url and not steps[0].get("url"):
+                    steps[0]["url"] = last_url
+                effective_goal = f"{effective_goal} (Context: page={last_url or last_goal})"
+                session["goal"] = effective_goal
+            else:
+                question = plan["clarification_question"]
+                await manager.send(session_id, "status", {
                     "status": "needs_user",
-                    "steps": 0,
-                    "elapsed_ms": 0,
-                    "goal": effective_goal,
-                    "final_answer": f"Task paused: {question}",
-                    "user_request": goal,
+                    "message": question,
                 })
-                session["status"] = "idle"
-                session["reviewer"] = None
-                return
-            effective_goal = f"{effective_goal} (Clarification: {clarification})"
-            session["goal"] = effective_goal
+                clarification = await _in_session_thread(session_id, reviewer.hint, question)
+                if not clarification:
+                    await manager.send(session_id, "result", {
+                        "status": "needs_user",
+                        "steps": 0,
+                        "elapsed_ms": 0,
+                        "goal": effective_goal,
+                        "final_answer": f"Task paused: {question}",
+                        "user_request": goal,
+                    })
+                    session["status"] = "idle"
+                    session["reviewer"] = None
+                    return
+                effective_goal = f"{effective_goal} (Clarification: {clarification})"
+                session["goal"] = effective_goal
 
         # 2. Router & ToolLoop: if direct mode, direct tool, or inspection recommended
         from ..tools.router import ActionRouter
@@ -866,12 +899,34 @@ def create_app() -> FastAPI:
             result = await _in_session_thread(session_id, worker)
             from ..agent.planner import remember_plan
             remember_plan(goal, plan, result)
+
+            # Persist run to MemoryStore & session context for cross-run memory
+            try:
+                from ..agent.memory import get_memory
+                mem = get_memory()
+                last_url = next((h.get("url") for h in reversed(result.get("history", [])) if h.get("url")), None)
+                if not last_url and steps and steps[0].get("url"):
+                    last_url = steps[0].get("url")
+                mem.record_run(
+                    run_id=result.get("run_id", ""),
+                    goal=goal,
+                    status=result.get("status", ""),
+                    summary=result.get("final_report") or "",
+                    metadata={"url": last_url or "", "steps": result.get("steps", 0)},
+                )
+                session["last_url"] = last_url
+                session["last_goal"] = goal
+                session["last_report"] = result.get("final_report")
+            except Exception as _mem_err:
+                logger.debug("Memory record_run failed: %s", _mem_err)
+
             await manager.send(session_id, "result", {
                 "status": result["status"], "steps": result["steps"], "elapsed_ms": result["elapsed_ms"],
                 "goal": result["goal"], "phases": result.get("phases", []), "usage": result.get("usage", {}),
                 "rescue_stats": result.get("rescue_stats", {}), "run_id": result.get("run_id"),
                 "trace": Path(result.get("trace_path", "")).name or None, "user_request": goal,
                 "recipes_used": result.get("recipes_used", []),
+                "final_report": result.get("final_report"),
             })
         except Exception as exc:
             logger.exception("Agent run failed for session %s", session_id)

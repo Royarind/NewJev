@@ -377,10 +377,43 @@ class Planner:
     def __init__(self) -> None:
         self._llm = get_planner_llm()
 
-    def _messages(self, user_goal: str) -> list[dict[str, str]]:
-        return [{"role": "system", "content": GOAL_UNDERSTANDING_PROMPT}, {"role": "user", "content": user_goal.strip()}]
+    def _messages(self, user_goal: str, context: dict | None = None) -> list[dict[str, str]]:
+        context_prompt = ""
+        recent_entries = []
+        if context:
+            if context.get("active_url"):
+                recent_entries.append(f"Active browser URL: {context['active_url']}")
+            if context.get("last_goal"):
+                recent_entries.append(f"Previous user goal: \"{context['last_goal']}\"")
+            if context.get("last_report"):
+                recent_entries.append(f"Previous extracted answer: \"{str(context['last_report'])[:200]}\"")
+        try:
+            from .memory import get_memory
+            history = get_memory().get_history(limit=5)
+            for h in history[-5:]:
+                meta = h.get("metadata") or {}
+                url_str = f" | URL: {meta.get('url')}" if meta.get("url") else ""
+                summary_str = f" | Answer: {h.get('summary')[:150]}" if h.get("summary") else ""
+                recent_entries.append(f"- [{h.get('status', '?')}] Request: \"{h.get('goal', '')}\"{url_str}{summary_str}")
+        except Exception:
+            pass
 
-    def understand(self, user_goal: str) -> StructuredGoal:
+        if recent_entries:
+            context_prompt = (
+                "\n\n### RECENT SESSION CONTEXT & HISTORY:\n"
+                + "\n".join(recent_entries)
+                + "\n\nCRITICAL CONTEXT RESOLUTION RULES:\n"
+                "- The user often gives follow-up requests referencing previous steps, pages, or entities (e.g. 'in the page', 'on that page', 'find out when he...', 'it').\n"
+                "- When the user refers to 'the page', 'that page', 'it', or uses pronouns like 'he', 'she', 'they' without naming them explicitly:\n"
+                "  RESOLVE the entity, subject, and URL from the recent session context above!\n"
+                "- DO NOT choose decision='ask' when the page, person, or entity is clear from recent history or the active URL.\n"
+                "  Instead, choose decision='act' and populate the step's url with the relevant page URL.\n"
+            )
+
+        system = GOAL_UNDERSTANDING_PROMPT + context_prompt
+        return [{"role": "system", "content": system}, {"role": "user", "content": user_goal.strip()}]
+
+    def understand(self, user_goal: str, context: dict | None = None) -> StructuredGoal:
         """Analyze a goal into a StructuredGoal with outcomes, constraints, assumptions, and ask/inspect/act."""
         remembered = plan_from_memory(user_goal)
         if remembered:
@@ -396,13 +429,13 @@ class Planner:
                 evidence_of_success=["recipe_procedure_complete"],
             )
         try:
-            resp = self._llm.complete(self._messages(user_goal)).content
+            resp = self._llm.complete(self._messages(user_goal, context=context)).content
             return self.parse_structured(resp, user_goal)
         except Exception as exc:
             logger.debug("understand_goal LLM fallback: %s", exc)
             return fallback_structured_goal(user_goal)
 
-    async def aunderstand(self, user_goal: str) -> StructuredGoal:
+    async def aunderstand(self, user_goal: str, context: dict | None = None) -> StructuredGoal:
         """Asynchronous goal understanding."""
         remembered = plan_from_memory(user_goal)
         if remembered:
@@ -418,17 +451,17 @@ class Planner:
                 evidence_of_success=["recipe_procedure_complete"],
             )
         try:
-            resp = (await self._llm.acomplete(self._messages(user_goal))).content
+            resp = (await self._llm.acomplete(self._messages(user_goal, context=context))).content
             return self.parse_structured(resp, user_goal)
         except Exception as exc:
             logger.debug("understand_goal LLM fallback: %s", exc)
             return fallback_structured_goal(user_goal)
 
-    def plan(self, user_goal: str) -> dict:
-        return self.understand(user_goal).to_dict()
+    def plan(self, user_goal: str, context: dict | None = None) -> dict:
+        return self.understand(user_goal, context=context).to_dict()
 
-    async def aplan(self, user_goal: str) -> dict:
-        return (await self.aunderstand(user_goal)).to_dict()
+    async def aplan(self, user_goal: str, context: dict | None = None) -> dict:
+        return (await self.aunderstand(user_goal, context=context)).to_dict()
 
     @classmethod
     def parse_structured(cls, content: str, original_goal: str) -> StructuredGoal:

@@ -203,7 +203,7 @@ function handleEvent(event, data) {
       break;
 
     case 'report':
-      addMessage('assistant', `<strong>\ud83d\udcca Extracted Report / Answer:</strong><br/><div style="margin-top:6px;white-space:pre-wrap;background:rgba(255,255,255,0.05);padding:8px 12px;border-radius:6px;border-left:3px solid #58a6ff">${escHtml(data.text || '')}</div>`);
+      addMessage('assistant', `<strong>📊 Extracted Report / Answer:</strong><br/><div style="margin-top:6px;white-space:pre-wrap;background:rgba(255,255,255,0.05);padding:8px 12px;border-radius:6px;border-left:3px solid #58a6ff">${renderMd(data.text || '')}</div>`);
       break;
 
     case 'result': {
@@ -222,7 +222,7 @@ function handleEvent(event, data) {
       const rs = data.rescue_stats || {};
       const rescues = (rs.llm || rs.user_hints) ? ` &nbsp; Rescues: ${rs.llm_helpful || 0}/${rs.llm || 0} model, ${rs.user_hints || 0} hints` : '';
       const recipe = (data.recipes_used || []).length ? ' &nbsp; \ud83e\udde0 used a learned recipe' : '';
-      const reportBlock = data.final_report ? `<div style="margin:8px 0;white-space:pre-wrap;background:rgba(56,139,253,0.1);padding:10px 14px;border-radius:6px;border-left:3px solid #388bfd"><strong>\ud83d\udcca Result Report:</strong><br/>${escHtml(data.final_report)}</div>` : '';
+      const reportBlock = data.final_report ? `<div style="margin:8px 0;white-space:pre-wrap;background:rgba(56,139,253,0.1);padding:10px 14px;border-radius:6px;border-left:3px solid #388bfd"><strong>📊 Result Report:</strong><br/>${renderMd(data.final_report)}</div>` : '';
       const div = addMessage('result',
         `${icon} <strong>${escHtml(data.status.toUpperCase())}</strong> — ${escHtml(data.goal)}<br/>` +
         `Steps: ${data.steps} &nbsp; Time: ${(data.elapsed_ms / 1000).toFixed(1)}s` + cost + rescues + recipe + reportBlock + phases +
@@ -314,7 +314,7 @@ function addMessage(type, html) {
 
 function addStatusMessage(text) {
   if (!text) return;
-  addMessage('status', `<span style="color:#8b949e;font-size:12px">&#9679; ${escHtml(text)}</span>`);
+  addMessage('status', `<span style="color:#8b949e;font-size:12px">&#9679; ${renderMd(text)}</span>`);
 }
 
 function addInspectorStep(data) {
@@ -372,6 +372,14 @@ function escHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function renderMd(str) {
+  let s = escHtml(str);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  return s;
 }
 
 // === Confirmations & hand-offs ===

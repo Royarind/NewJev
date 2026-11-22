@@ -846,6 +846,9 @@ class AgentLoop:
             }
             if result_note:
                 entry["result"] = result_note[:1500]
+            if op == "COPY_TEXT" and text and not ctx.final_report:
+                ctx.final_report = text
+                self._safe_emit("report", {"text": text, "step": len(ctx.history) + 1})
             if is_rescue:
                 entry["rescue"] = True
             ctx.history.append(entry)
