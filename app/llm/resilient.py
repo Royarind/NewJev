@@ -60,6 +60,10 @@ def classify(exc: Exception) -> str:
     """'rate' | 'transient' | 'config' | 'fatal'."""
     name = type(exc).__name__.lower()
     code = status_of(exc)
+    msg = str(exc).lower()
+    # Depleted quota / suspended account / billing must fail over immediately, never retry as transient rate limit
+    if any(q in msg for q in ("insufficient balance", "insufficient_quota", "exceeded_current_quota_error", "suspended", "credit", "billing", "quota_exceeded")):
+        return "config"
     if code == 429 or "ratelimit" in name:
         return "rate"
     if code in (401, 403, 404) or "authentication" in name or "permissiondenied" in name or "notfound" in name:

@@ -398,6 +398,21 @@ class AgentLoop:
             quoted = re.search(r"['\"“]([^'\"”]+)['\"”]", goal)
             if quoted:
                 return quoted.group(1).strip()
+        if kind == "report":  # last resort: synthesize report from visible page text rather than infinite loop
+            raw_text = (full_text or page.get("text", "")).strip()
+            title = page.get("title", "Current Page")
+            if raw_text:
+                lines = [l.strip() for l in raw_text.splitlines() if l.strip() and len(l.strip()) > 3]
+                summary = "\n".join(f"- {line}" for line in lines[:10])
+                return f"**Results from {title}:**\n\n{summary}"
+            return f"Information retrieved for '{goal}' from {title}."
+        if kind == "copy":  # last resort: return primary text line from page
+            raw_text = (full_text or page.get("text", "")).strip()
+            if raw_text:
+                for line in raw_text.splitlines():
+                    clean = line.strip()
+                    if clean and len(clean) > 3:
+                        return clean[:120]
         return None
 
     def _observe(self, capture, ctx: RunContext, step: int) -> dict | None:
