@@ -75,6 +75,22 @@ class ActionRouter:
                 confidence=0.85,
             )
 
+        # 2b. Check for ecommerce shopping or checkout
+        try:
+            from ..ecommerce.bridge import is_ecommerce_goal, extract_ecommerce_details
+            if is_ecommerce_goal(text):
+                details = extract_ecommerce_details(text)
+                tool_name = "ecommerce_checkout" if details.get("is_checkout") and details.get("url") else "ecommerce_shop"
+                return RouteDecision(
+                    route_type="direct_tool",
+                    recommended_tool=tool_name,
+                    tool_arguments={"query": details.get("query", text), **details},
+                    rationale="Goal matches agentic ecommerce shopping, product search, or checkout.",
+                    confidence=0.95,
+                )
+        except Exception as e:
+            logger.debug("Ecommerce routing check: %s", e)
+
         # 3. Check for direct tool matches (faster, deterministic, avoids GUI overhead)
         for tool_name, pattern in DIRECT_CAPABILITY_PATTERNS.items():
             if pattern.search(text):

@@ -621,6 +621,29 @@ def _tool_extract_web_content(args: dict[str, Any], context: dict[str, Any] | No
     )
 
 
+def _tool_ecommerce_shop(args: dict[str, Any], context: dict[str, Any] | None = None) -> ToolResult:
+    from ..ecommerce.bridge import run_ecommerce
+    query = args.get("query", "")
+    res = run_ecommerce(query, context=context)
+    return ToolResult(
+        success=res.get("success", False),
+        output=res.get("final_answer", ""),
+        evidence={"products_found": len(res.get("products", [])), "query": query},
+    )
+
+
+def _tool_ecommerce_checkout(args: dict[str, Any], context: dict[str, Any] | None = None) -> ToolResult:
+    from ..ecommerce.bridge import run_ecommerce
+    url = args.get("url", "")
+    query = args.get("query") or f"checkout {url}"
+    res = run_ecommerce(query, context=context)
+    return ToolResult(
+        success=res.get("success", False),
+        output=res.get("final_answer", ""),
+        evidence={"results": len(res.get("results", [])), "url": url},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Tool Declarations and Registration
 # ---------------------------------------------------------------------------
@@ -950,6 +973,41 @@ def register_builtin_tools(registry: CapabilityRegistry | None = None) -> None:
         risk_level=ToolRisk.READ_ONLY,
         verification_method="content_payload_check",
         handler=_tool_extract_web_content,
+    ))
+
+    # 19. ecommerce_shop
+    reg.register(Tool(
+        name="ecommerce_shop",
+        description="Search Google Shopping, compare product prices across ecommerce merchants (Amazon, Flipkart, etc.), and extract refinement filters.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Product search query or price comparison request"},
+            },
+            "required": ["query"],
+        },
+        risk_level=ToolRisk.READ_ONLY,
+        verification_method="shopping_results_check",
+        handler=_tool_ecommerce_shop,
+    ))
+
+    # 20. ecommerce_checkout
+    reg.register(Tool(
+        name="ecommerce_checkout",
+        description="Automate product variant selection, add-to-cart, and checkout form navigation.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "Product URL to checkout"},
+                "variants": {"type": "object", "description": "Variant selections e.g. {'size': 'L', 'color': 'Blue'}"},
+                "quantity": {"type": "integer", "description": "Quantity to buy"},
+            },
+            "required": ["url"],
+        },
+        risk_level=ToolRisk.EXTERNAL_COMMUNICATION,
+        side_effects=["Adds product to cart and fills shipping address"],
+        verification_method="checkout_status_check",
+        handler=_tool_ecommerce_checkout,
     ))
 
 

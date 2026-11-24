@@ -879,6 +879,32 @@ def create_app() -> FastAPI:
                 return
             logger.info("ToolLoop finished with status '%s'; continuing with AgentLoop.", tool_res.status)
 
+        # 3. Agentic Ecommerce Module
+        from ..ecommerce import is_ecommerce_goal, run_ecommerce
+        if (not forced_mode) and (is_ecommerce_goal(effective_goal) or plan.get("recommended_mode") == "ecommerce"):
+            logger.info("Routing request to Agentic Ecommerce Module...")
+            def ecommerce_worker():
+                return run_ecommerce(
+                    effective_goal,
+                    emit_callback=emit,
+                    context={"session_id": session_id, "url": url},
+                )
+
+            ecom_res = await _in_session_thread(session_id, ecommerce_worker)
+            if ecom_res and ecom_res.get("status") in ("done", "unverified", "needs_user"):
+                await manager.send(session_id, "result", {
+                    "status": ecom_res.get("status", "done"),
+                    "steps": len(ecom_res.get("results") or [1]),
+                    "elapsed_ms": 0,
+                    "goal": effective_goal,
+                    "final_answer": ecom_res.get("final_answer"),
+                    "user_request": goal,
+                })
+                session["status"] = "idle"
+                session["reviewer"] = None
+                return
+            logger.info("Ecommerce module finished with status '%s'; continuing with AgentLoop.", (ecom_res or {}).get("status"))
+
         def steer() -> list[str]:
             with session.setdefault("steer_lock", threading.Lock()):
                 msgs, session["steer"] = list(session.get("steer") or []), []
