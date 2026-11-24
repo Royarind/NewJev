@@ -36,11 +36,11 @@ class Settings(BaseSettings):
     # Text LLM (TYPE_TEXT — field value generation)
     # -------------------------------------------------------------------------
     text_llm_provider: ProviderType = Field(default="openrouter")
-    text_llm_model: str = Field(default="qwen/qwen3.8-27b:free")
+    text_llm_model: str = Field(default="nvidia/nemotron-3-ultra-550b-a55b:free")
     text_llm_api_key: str = Field(default="", description="Optional direct override for Text LLM API key")
     text_llm_base_url: str = Field(default="", description="Optional direct override for Text LLM base URL")
     text_llm_temperature: float = Field(default=0.2, ge=0.0, le=2.0)
-    text_llm_max_tokens: int = Field(default=512, ge=1)
+    text_llm_max_tokens: int = Field(default=2048, ge=1)
     text_llm_top_p: float = Field(default=0.95, ge=0.0, le=1.0)
     text_llm_frequency_penalty: float = Field(default=0.0, ge=-2.0, le=2.0)
     text_llm_presence_penalty: float = Field(default=0.0, ge=-2.0, le=2.0)
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     # Planner LLM (goal understanding and step planning)
     # -------------------------------------------------------------------------
     planner_llm_provider: ProviderType = Field(default="openrouter")
-    planner_llm_model: str = Field(default="nvidia/nemotron-3-super-120b-a12b:free")
+    planner_llm_model: str = Field(default="nvidia/nemotron-3-ultra-550b-a55b:free")
     planner_llm_api_key: str = Field(default="", description="Optional direct override for Planner LLM API key")
     planner_llm_base_url: str = Field(default="", description="Optional direct override for Planner LLM base URL")
     planner_llm_temperature: float = Field(default=0.3, ge=0.0, le=2.0)

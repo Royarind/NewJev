@@ -152,6 +152,9 @@ save immediately: there is no separate save step, and the file does not need to 
         "Return a JSON object with exactly one key, text: a clear, concise markdown report answering the user's goal "
         "based on the information visible on the page (e.g. flight details, product prices, search results, summaries). "
         "Extract the exact details requested (airlines, departure/arrival times, durations, stops, prices, figures, names). "
+        "IMPORTANT: Ignore all navigation boilerplate — skip links, menu headers, accessibility shortcuts, sign-in prompts, "
+        "tab names (Shopping, Images, News, More), cookie banners, and browser chrome UI. Only extract content that "
+        "directly answers the user goal. If a product is unreleased, say so and report rumoured/estimated specs and price. "
         "Never invent data. Format with bullet points or a markdown table when listing items. "
         'Respond only with JSON: {"text": "..."}'
     ),
@@ -178,6 +181,47 @@ KEEP_OPEN = re.compile(r"^\s*(open|show|display|find|search|look up|navigate|go 
 EDITS = re.compile(r"\b(save|edit|add|append|change|update|write|type|rename|delete|remove|create|paste|copy|move|fill)\b", re.I)
 
 FINAL_STATUSES = ("done", "unverified", "blocked", "needs_user", "max_steps", "stopped", "error")
+
+
+
+def _smart_report_extract(raw_text: str, goal: str, title: str) -> str:
+    """
+    Extract goal-relevant lines from page text, filtering nav boilerplate.
+    Scores by keyword overlap with the user goal, returns a markdown report.
+    """
+    _NAV_BOILERPLATE = {
+        "skip to main content", "accessibility help", "sign in", "ai mode",
+        "shopping", "images", "news", "short videos", "forums", "more",
+        "privacy", "terms", "settings", "feedback", "tools", "search tools",
+        "all results", "verbatim", "web", "videos", "maps", "books", "flights",
+        "finance", "about", "help", "send feedback", "dark theme", "search settings",
+    }
+    _STOPS = {"a", "an", "the", "is", "in", "on", "of", "to", "and", "or",
+              "for", "can", "you", "i", "me", "my", "where", "what", "how",
+              "find", "get", "give", "show", "please", "would", "could", "will",
+              "be", "are", "was", "were", "do", "does", "did", "it", "its"}
+    goal_words = {w.lower() for w in re.findall(r"[a-z0-9]+", goal.lower())
+                  if len(w) > 2 and w not in _STOPS}
+
+    scored = []
+    for line in raw_text.splitlines():
+        clean = line.strip()
+        if not clean or len(clean) <= 3:
+            continue
+        if clean.lower() in _NAV_BOILERPLATE:
+            continue
+        if len(clean.split()) <= 1 and clean.lower() in {
+            "home", "menu", "search", "login", "register", "close", "skip", "back", "next",
+        }:
+            continue
+        line_words = {w.lower() for w in re.findall(r"[a-z0-9]+", clean.lower())}
+        score = len(goal_words & line_words)
+        scored.append((score, len(clean), clean))
+
+    scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+    top = [item[2] for item in scored[:10]]
+    summary = "\n".join(f"- {line}" for line in top)
+    return f"**Results from {title}:**\n\n{summary}"
 
 
 def _extract_field_value(raw: str | dict | None) -> str | None:
@@ -402,9 +446,7 @@ class AgentLoop:
             raw_text = (full_text or page.get("text", "")).strip()
             title = page.get("title", "Current Page")
             if raw_text:
-                lines = [l.strip() for l in raw_text.splitlines() if l.strip() and len(l.strip()) > 3]
-                summary = "\n".join(f"- {line}" for line in lines[:10])
-                return f"**Results from {title}:**\n\n{summary}"
+                return _smart_report_extract(raw_text, goal, title)
             return f"Information retrieved for '{goal}' from {title}."
         if kind == "copy":  # last resort: return primary text line from page
             raw_text = (full_text or page.get("text", "")).strip()
